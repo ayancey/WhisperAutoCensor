@@ -42,22 +42,29 @@ ws = obsws(host, port, password)
 ws.connect()
 
 
+recording = None
+
 try:
     while True:
         recording_status = ws.call(requests.GetRecordStatus())
 
-        if not recording_status.datain["outputActive"]:
-            raise ValueError("OBS is not recording. Start recording and try again.")
+        if recording_status.datain["outputActive"]:
+            recording = True
+        else:
+            if recording is True or recording is None:
+                print("Window capture will start when OBS is recording")
+            recording = False
 
-        window_pos = get_window_positions()
+        if recording:
+            window_pos = get_window_positions()
 
-        with open("window_recording.json", "a") as f:
-            f.write(json.dumps({
-                "time": recording_status.datain["outputTimecode"],
-                "windows": get_window_positions()
-            }) + "\n")
+            with open("window_recording.json", "a") as f:
+                f.write(json.dumps({
+                    "time": recording_status.datain["outputTimecode"],
+                    "windows": get_window_positions()
+                }) + "\n")
 
-        print(f"recorded positions at {recording_status.datain['outputTimecode']}")
+            print(f"recorded positions at {recording_status.datain['outputTimecode']}")
 
         time.sleep(1)
 except KeyboardInterrupt:
